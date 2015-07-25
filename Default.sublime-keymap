@@ -1,0 +1,4 @@
+[{
+  "keys":["alt+."],
+  "command": "open_required_file"
+}]
