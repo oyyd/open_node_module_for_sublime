@@ -2,15 +2,27 @@ import sublime, sublime_plugin
 import re, json
 from os import path
 
-# NOTE: do not support dynamic requiring
+# NOTE: static requiring
 
-# TODO: is the json handler correct?
+# TODO: core module and global module
+# TODO: a more accurate `import` assertion
 # TODO: check comments syntax
 # TODO: if more than one sentence ...
-path_reg = re.compile('require\([\"\'](.*)[\"\']\)')
+path_regs = [
+  re.compile('require\([\"\'](.*)[\"\']\)'),
+  re.compile('import.*[\"\'](.*)[\"\']'),
+  re.compile('from.*[\"\'](.*)[\"\']'),
+]
 
 def alert_file_not_found():
-  sublime.error_message('Node module not found.')
+  sublime.error_message('File not found.')
+
+def get_require_text(line_text):
+  for reg in path_regs:
+    result = re.search(reg, line_text)
+    if result != None:
+      return result.group(1)
+  return None
 
 def try_directory_module(possible_dir):
   if not path.isdir(possible_dir):
@@ -28,16 +40,7 @@ def try_directory_module(possible_dir):
   try_file = path.join(possible_dir, main_file)
   return try_ext(try_file)
 
-# trail_path = ['index.js']
-# def try_file(dir_path):
-#   for trial in trail_path:
-#     try_path = path.join(dir_path, trial)
-#     print(try_path)
-#     if(path.isfile(try_path)):
-#       return  try_path
-#   return None
-
-trial_ext = ['js', 'json']
+trial_exts = ['js', 'json', 'jsx', 'es', 'es6']
 def try_ext(dir_path):
   dot_index = None
   try:
@@ -46,12 +49,11 @@ def try_ext(dir_path):
     pass
 
   if dot_index != None:
-    if path.isfile(dir_path):
+    ext = dir_path[dot_index+1:]
+    if ext in trial_exts and path.isfile(dir_path):
       return dir_path
-    else:
-      return None
 
-  for ext in trial_ext:
+  for ext in trial_exts:
     try_path = dir_path + '.' + ext
     if path.isfile(try_path):
       return try_path
@@ -71,16 +73,16 @@ def walk_node_modules(current_file_name, require_text):
   return None
 
 def get_file_path(current_file_name, require_text):
-  # TODO: also consider json, jsx, es ...
-  # TODO: package json extension
   if require_text[0] == '.':
     file_path = path.realpath(path.join(current_file_name, '../', require_text))
   # TODO: window '\'
-  # TODO: test absolute
   elif require_text[0] == '/':
     file_path = path.realpath(require_text)
 
-  return try_ext(file_path)
+  result = try_ext(file_path)
+  if result == None:
+    result = try_directory_module(file_path)
+  return result
 
 class OpenRequiredFileCommand(sublime_plugin.TextCommand):
   def run(self, edit):
@@ -90,9 +92,9 @@ class OpenRequiredFileCommand(sublime_plugin.TextCommand):
 
     line = view.line(view.sel()[0])
     line_text = view.substr(line)
-    require_text = re.search(path_reg, line_text).group(1)
+    require_text = get_require_text(line_text)
+    print(require_text)
     if require_text == None:
-      alert_file_not_found()
       return
 
     file_path = None

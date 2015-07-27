@@ -1,0 +1,3 @@
+#Open Node Module for Sublime Text
+
+coming soon ...
