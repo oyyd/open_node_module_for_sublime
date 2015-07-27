@@ -64,7 +64,6 @@ def walk_node_modules(current_file_name, require_text):
   while current_dir != '':
     possible_dir = path.join(current_dir, 'node_modules', require_text)
     possible_file = try_directory_module(possible_dir)
-    # possible_file = try_file(possible_dir)
     if possible_file:
       return possible_file
     current_dir = current_dir[:current_dir.rindex('/')]
@@ -75,7 +74,6 @@ def walk_node_modules(current_file_name, require_text):
 def get_file_path(current_file_name, require_text):
   if require_text[0] == '.':
     file_path = path.realpath(path.join(current_file_name, '../', require_text))
-  # TODO: window '\'
   elif require_text[0] == '/':
     file_path = path.realpath(require_text)
 
