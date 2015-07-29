@@ -3,11 +3,6 @@ import re, json
 from os import path
 
 # NOTE: static requiring
-
-# TODO: core module and global module
-# TODO: a more accurate `import` assertion
-# TODO: check comments syntax
-# TODO: if more than one sentence ...
 path_regs = [
   re.compile('require\([\"\'](.*)[\"\']\)'),
   re.compile('import.*[\"\'](.*)[\"\']'),
